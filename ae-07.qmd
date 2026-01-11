@@ -31,6 +31,7 @@ library(glue)
 library(knitr)
 library(patchwork)
 library(ggimage)
+library(jpeg)
 ```
 
 ## Activity 1 - Enrollment in Public Schools
@@ -42,66 +43,183 @@ We will break down the task of reproducing the visualization, starting with ggpl
 1.  Create a data frame called `public_school` with the relevant data. This data frame should have three columns: `enrolled`, `year`, and `percent`, where `percent` is given as a number between 0 to 100.
 
 ```{r}
-# add code here
+public_school = tibble(
+  enrolled = c("N", "Y", "N", "Y", "N", "Y"),
+  year= c(1876, 1876, 1886, 1886, 1896, 1896), 
+  percent = c(62.41, 37.59, 43.34,56.66, 42.71, 57.29))
+
+public_school <- public_school %>%
+  mutate(enrolled = factor(enrolled, levels = c("Y", "N")))
+
+levels(public_school$enrolled)
+public_school
+
 ```
+
+\
 
 2.  Create a stacked bar chart where year is on the x-axis and percent enrolled is on the y-axis. Once you do, compare the plot you made to the original visualization in @fig-public-school and make a list of all of updates you will need to make to this plot to make it look more like for a complete reproduction.
 
 ```{r}
-# add code here
+ggplot(public_school,aes(x = year, y = percent, fill = enrolled)) +
+  geom_bar(stat = "identity") 
+
+
 ```
+
+Changes I have to make are fixing the x axis, changing the order of enrolled and not enrolled, putting the years on top of the plot.
 
 3.  Update the colors on the plot to match the inspiration figure. Also make sure that the order in which the colors show up in the bars as well as the legend labels match. Note: For this task you can either use red and black colors, or use an additional piece of software (e.g., Digital Color Meter on a Mac) to match the exact colors.
 
 ```{r}
-# add code here
+ggplot(public_school,aes(x = year, y = percent, fill = enrolled)) + 
+  geom_bar(stat = "identity") + 
+  scale_x_continuous(limits = c(1870, 1902), breaks = c(1876, 1886, 1896)) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled", "Proprtion of Children Not Enrolled")) + 
+  labs(title = "Proprtion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools",
+       subtitle = "Done by Atlanta University", 
+       fill = "")
 ```
 
 4.  Place the percentages of "yes"s in the red portions of the bars and remove all axis elements by setting `theme_void()`. Hint: First calculate where on the y-axis the annotation should be placed and store those values in the data as a new column.
 
 ```{r}
-# add code here
+
+public_school <- public_school %>%
+  mutate(annotate = c(NA, 81, NA, 73, NA, 69))
+
+
+
+ggplot(public_school, aes(x = year, y = percent, fill = enrolled)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = paste0(as.character(percent), "%"), x = year, y = annotate)) + 
+  scale_x_continuous(limits = c(1870, 1902), breaks = c(1876, 1886, 1896)) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled", "Proprtion of Children Not Enrolled")) + 
+  labs(title = "Proprtion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools",
+       subtitle = "Done by Atlanta University", 
+       fill = "") +
+  theme_void()
 ```
 
 5.  Add back the x-axis labels, but place them on top of the bars.
 
 ```{r}
-# add code here
+ggplot(public_school, aes(x = year, y = percent, fill = enrolled)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = paste0(as.character(percent), "%"), x = year, y = annotate)) +
+  geom_text(aes(label = as.character(year), x = year, y = 105)) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled", "Proprtion of Children Not Enrolled")) + 
+  labs(title = "Proprtion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools",
+       subtitle = "Done by Atlanta University", 
+       x = "",
+       fill = "") +
+  theme_void() 
 ```
 
 6.  Make the bars skinnier and increase the white space between them.
 
 ```{r}
-# add code here
+ggplot(public_school, aes(x = year, y = percent, fill = enrolled)) + 
+  geom_bar(stat = "identity", width = 5) + 
+  geom_text(aes(label = paste0(as.character(percent), "%"), x = year, y = annotate)) +
+  geom_text(aes(label = as.character(year), x = year, y = 105)) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled", "Proprtion of Children Not Enrolled")) + 
+  labs(title = "Proprtion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools",
+       subtitle = "Done by Atlanta University", 
+       x = "",
+       fill = "") +
+  theme_void() 
 ```
 
-7.  The original visualization in @fig-public-school features three bars of unequal he\*ight. Presumably, this might indicate a larger population being represented, but we don't have data on how much larger this population is. But we can eyeball that the bar for 1886 is roughly 25% taller than the bar for 1876 and the bar for 1896 is roughly 60% taller. Recreate the visualization with unequal bar heights using these rough estimates.
+7.  The original visualization in @fig-public-school features three bars of unequal height. Presumably, this might indicate a larger population being represented, but we don't have data on how much larger this population is. But we can eyeball that the bar for 1886 is roughly 25% taller than the bar for 1876 and the bar for 1896 is roughly 60% taller. Recreate the visualization with unequal bar heights using these rough estimates.
 
 ```{r}
-# add code here
+
+public_school <- public_school %>%
+  mutate(annotate = c(NA, 81, NA, 75, NA, 87))
+
+
+public_school <- public_school %>%
+  mutate(proportion = c(1, 1, 1.25, 1.25, 1.6, 1.6), 
+         scaled_percent = percent * proportion)
+
+
+ggplot(public_school, aes(x = year, y = scaled_percent, fill = enrolled)) + 
+  geom_bar(stat = "identity", width = 5) + 
+  geom_text(aes(label = paste0(as.character(percent), "%"), x = year, y = annotate)) +
+  geom_text(aes(label = as.character(year), x = year, y = 165)) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled", "Proprtion of Children Not Enrolled")) + 
+  labs(title = "Proprtion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools",
+       subtitle = "Done by Atlanta University", 
+       x = "",
+       fill = "") +
+  theme_void() 
 ```
 
 8.  Move the legend underneath the first bar and reduce the size of the legend key.
 
 ```{r}
-# add code here
+ggplot(public_school, aes(x = year, y = scaled_percent, fill = enrolled)) + 
+  geom_bar(stat = "identity", width = 4) + 
+  geom_text(aes(label = paste0(as.character(percent), "%"), x = year, y = annotate)) +
+  geom_text(aes(label = as.character(year), x = year, y = 165)) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled", "Proprtion of Children Not Enrolled")) + 
+  labs(title = "Proprtion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools",
+       subtitle = "Done by Atlanta University", 
+       x = "",
+       fill = "") +
+  theme_void() +
+  theme(legend.position = "bottom",
+        legend.justification = "left", 
+        legend.text = element_text(size = 8)) + 
+  guides(fill = guide_legend(ncol = 1))
 ```
 
 9.  Adjust the size and aspect ratio of the figure.
 
-```{r}
-# add code here
+```{r, fig.width = 10, fig.height = 7}
+
+g <- ggplot(public_school, aes(x = year, y = scaled_percent, fill = enrolled)) + 
+  geom_bar(stat = "identity", width = 4) + 
+  geom_text(aes(label = paste0(as.character(percent), "%"), x = year, y = annotate), size = 6) +
+  geom_text(aes(label = as.character(year), x = year, y = 165), size = 5) +
+  scale_fill_manual(values = c("red", "black"), labels = c("Proportion of Children Enrolled \nProportion D'Enfants Enregistres", "Proprtion of Children Not Enrolled \nProportion D'Enfants Non Enregistres")) + 
+  labs(title = "Proportion of Total Negro Children Of School Age Who Are Enrolled in The Public Schools. \n Proportion Des Enfants Negres En Age D'Ecole Enregistres Dans Les Ecoles Publiques",
+       subtitle = "Done by Atlanta University.", 
+       x = "",
+       fill = "") +
+  theme_void() +
+  theme(legend.position = "bottom",
+        legend.justification = "left", 
+        legend.text = element_text(size = 10), 
+        plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5), 
+        plot.margin = margin(t = 2, r = 2, b = 2, l = 2, unit = "pt")) + 
+  guides(fill = guide_legend(ncol = 1)) 
+
+g
+
 ```
 
 10. Change the background of the plot to match the background of the original visualization in @fig-public-school. Hint: Look for an image of a "parchment paper" on a free image site like Pixabay ([https://pixabay.com](https://pixabay.com/)) and place the image in the background of the plot.
 
-```{r}
-# add code here
+```{r, fig.width = 11, fig.height = 9}
+url <- "https://cdn.pixabay.com/photo/2015/12/03/08/50/paper-1074131_1280.jpg"
+
+ggbackground(g, url)
+
+
+
+
 ```
+
+\
+
+\
 
 11. What other updates would you make to match the original visualization in @fig-public-school?
 
-Add answers here.
+I would make the bars start at the same top height instead of at y = 0. I could also make the legend more accurate.
 
 ## Activity 2 - Income expenditures
 
@@ -116,37 +234,90 @@ The second activity focuses on recreating @fig-income-expenditure, which was ori
 2.  Read the data file `data/income.csv` as `income_wide`.Then, we dive into the reproduction exercises, using the following dataset.
 
 ```{r}
-# add code here
+#reading in data 
+income_wide <- read_csv("data/income.csv")
+
+income_wide
 ```
 
 3.  Create the segmented bar plot. Hint: You will first need to pivot your data longer.
 
 ```{r}
-# add code here
+income_wide_longer <- income_wide %>%
+    pivot_longer(
+    cols = c(Rent, Food, Clothes, Tax, Other), # must use a selection helper
+    names_to = "expense_type",
+    values_to = "percent_of_income"
+  )
+
+income_wide_longer <- income_wide_longer %>%
+  mutate(Class = fct_relevel(Class, "$1000 AND OVER", "$750-1000", "$500-750", "$400-500","$300-400", "$200-300","$100-200"), 
+         expense_type = fct_relevel(expense_type, "Other", "Tax", "Clothes", "Food", "Rent"), 
+         annotate = if_else(percent_of_income < 0.7, "", paste0(percent_of_income, "%")), 
+         color = if_else(expense_type == "Rent", "white", "black"), 
+         labels = case_when(Class == "$100-200" ~ "Poor", 
+                            Class == "$200-300" ~ "Poor", 
+                            Class == "$300-400" ~ "Fair", 
+                            Class == "$400-500" ~ "Fair", 
+                            Class == "$500-750" ~ "Comfortable", 
+                            Class == "$750-1000" ~ "Comfortable", 
+                            Class == "$1000 AND OVER" ~ "Well to do"))
+
+
+ggplot(income_wide_longer, aes(x = percent_of_income, y = Class, fill = expense_type)) +
+  geom_bar(stat = "identity")
+
 ```
 
 4.  Add annotations that show the percentages associated with each of the segments.
 
 ```{r}
-# add code here
+
+ggplot(income_wide_longer, aes(x = percent_of_income, y = Class, fill = expense_type)) +
+  geom_bar(stat = "identity") + 
+  geom_text(
+    aes(label = annotate), 
+      position = position_stack(vjust = 0.5),
+    size = 2)
 ```
 
 5.  Update the color palette and legend to match the original Du Bois visualization.
 
 ```{r}
-# add code here
+ggplot(income_wide_longer, aes(x = percent_of_income, y = Class, fill = expense_type)) +
+  geom_bar(stat = "identity") + 
+  geom_text(
+    aes(label = annotate, color = color), 
+      position = position_stack(vjust = 0.5),
+    size = 2) + 
+  scale_color_identity() +
+  scale_fill_manual(values = c("gray", "lightblue", "lightpink", "purple", "black"))
 ```
 
 6.  Re-position the legend and match it, as closely as you can, to the original visualization.
 
-```{r}
-# add code here
-```
-
-7.  Add some more finishing touches to get as close to the original visualization as you can.
-
-```{r}
-# add code here
+```{r, fig.width = 10, fig.height = 7}
+ggplot(income_wide_longer, aes(x = percent_of_income, y = Class, fill = expense_type)) +
+  geom_bar(stat = "identity") + 
+  geom_text(
+    aes(label = annotate, color = color), 
+      position = position_stack(vjust = 0.5),
+    size = 3.5) +
+  geom_text(aes(label = labels, y = Class, x = 105), size = 3) + 
+  scale_color_identity() +
+  scale_fill_manual(values = c("gray", "lightblue", "lightpink", "purple", "black"), labels = c("Other expenses and savings.", "Direct Taxes.", "Clothes.", "Food.", "Rent.")) + 
+    theme(legend.position = "top",
+          legend.title.position = "top", 
+          legend.key.justification = "center", 
+          legend.title.align = 0.5, 
+          axis.text.x = element_blank()
+          ) +
+  guides(fill = guide_legend(reverse= TRUE)) + 
+  labs(fill = "Annual expenditure for:", 
+       title = "Income and expenditure of 150 Negro Families in Atlanta, GA U.S.A", 
+       x = "") 
 ```
 
 8.  What other updates would you make to match the original visualization in @fig-income-expenditure?
+
+Some other updates I could make are fixing the labels for Poor, Fair Comfortable and Well to Do so they are closer to the original visualization. I could also make the y axis look closer to the visualization by trying to add the actual average of each group.
